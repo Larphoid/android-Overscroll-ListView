@@ -6,6 +6,7 @@ The bounce effect can be turned off.
 The animation delay can be set via the delay variable, which is in milliseconds. Default = 10. The higher the value, the slower the animation.
 
 Usage:
+======
 
 The bounce effect can be turned on / off by calling listview.setBounce(true / false).
 
