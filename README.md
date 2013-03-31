@@ -10,7 +10,7 @@ Usage:
 
 The bounce effect can be turned on / off by calling listview.setBounce(true / false).
 
-In xml, instead of creating a <ListView .../>, create a <com.larphoid.overscrollinglistview.OverscrollListview .../>
+In xml, instead of creating a ListView, create a com.larphoid.overscrollinglistview.OverscrollListview
 
 Ofcourse you can put the OverscrollListview.java in your current package and change com.larphoid.overscrollinglistview to your current package name.
 
