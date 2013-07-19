@@ -8,7 +8,9 @@ The animation delay can be set via the delay variable, which is in milliseconds.
 Usage:
 ======
 
-The bounce effect can be turned on / off by calling listview.setBounce(true / false).
+The bounce effect can be turned on / off with listview.setBounce(true / false).
+The bounce length can be set with listview.setElasticity(float), see source file for help.
+The break speed can be set with listview.setBreakspeed(float), see source file for help.
 
 In xml, instead of creating a ListView, create a com.larphoid.overscrollinglistview.OverscrollListview
 
