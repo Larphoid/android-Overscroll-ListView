@@ -1,4 +1,4 @@
-package com.larphoid.overscrollinglistview;
+package com.larphoid.overscrolllistview;
 
 import android.content.Context;
 import android.os.Handler;
@@ -6,36 +6,37 @@ import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.WindowManager;
+import android.view.GestureDetector.OnGestureListener;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.AbsListView.OnScrollListener;
 
-public class OverscrollListview extends ListView implements OnScrollListener, View.OnTouchListener, android.widget.AdapterView.OnItemSelectedListener {
+public class OverscrollListView extends ListView implements OnScrollListener, View.OnTouchListener, android.widget.AdapterView.OnItemSelectedListener {
+
+	protected static float BREAKSPEED = 4f, ELASTICITY = 0.67f;
+
 	public Handler mHandler = new Handler();
-	private View measure;
-	public int nHeaders = 1, nFooters = 1, divHeight, delay = 10;
-	public boolean rebound = false;
+	public int nHeaders = 1, nFooters = 1, divHeight = 0, delay = 10;
 	private int firstVis, visibleCnt, lastVis, totalItems, scrollstate;
-	private boolean bounce = true, recalcV = false, trackballEvent = false;
-	private long flingTimestamp = 0;
-	private float velocity = 0;
-	private static final float BREAKSPEED = 4.0f, BOUNCEBRAKE = -.5f;
+	private boolean bounce = true, rebound = false, recalcV = false, trackballEvent = false;
+	private long flingTimestamp;
+	private float velocity;
+	private View measure;
 	private GestureDetector gesture;
 
-	public OverscrollListview(Context context) {
+	public OverscrollListView(Context context) {
 		super(context);
 		initialize(context);
 	}
 
-	public OverscrollListview(Context context, AttributeSet attrs) {
+	public OverscrollListView(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		initialize(context);
 	}
 
-	public OverscrollListview(Context context, AttributeSet attrs, int defStyle) {
+	public OverscrollListView(Context context, AttributeSet attrs, int defStyle) {
 		super(context, attrs, defStyle);
 		initialize(context);
 	}
@@ -83,12 +84,12 @@ public class OverscrollListview extends ListView implements OnScrollListener, Vi
 		return false;
 	}
 
-	private class thisGestureListener implements OnGestureListener {
+	private class gestureListener implements OnGestureListener {
 		@Override
 		public boolean onDown(MotionEvent e) {
 			rebound = false;
 			recalcV = false;
-			velocity = 0;
+			velocity = 0f;
 			return false;
 		}
 
@@ -96,7 +97,7 @@ public class OverscrollListview extends ListView implements OnScrollListener, Vi
 		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
 			rebound = true;
 			recalcV = true;
-			velocity = velocityY / 25.0f;
+			velocity = velocityY / 25f;
 			flingTimestamp = System.currentTimeMillis();
 			return false;
 		}
@@ -118,18 +119,18 @@ public class OverscrollListview extends ListView implements OnScrollListener, Vi
 		public boolean onSingleTapUp(MotionEvent e) {
 			rebound = true;
 			recalcV = false;
-			velocity = 0;
+			velocity = 0f;
 			return false;
 		}
 	};
 
-	public void initialize(Context context) {
+	private void initialize(Context context) {
 		View header = new View(context);
 		header.setMinimumHeight(((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight());
 		addHeaderView(header, null, false);
 		addFooterView(header, null, false);
 
-		gesture = new GestureDetector(new thisGestureListener());
+		gesture = new GestureDetector(new gestureListener());
 		gesture.setIsLongpressEnabled(false);
 		flingTimestamp = System.currentTimeMillis();
 		setHeaderDividersEnabled(false);
@@ -148,24 +149,57 @@ public class OverscrollListview extends ListView implements OnScrollListener, Vi
 		lastVis = 0;
 		totalItems = 0;
 		scrollstate = 0;
+		rebound = true;
+		setSelectionFromTop(nHeaders, divHeight);
 	}
 
+	/**
+	 * Turns bouncing animation on/off.
+	 * 
+	 * @param bouncing
+	 *            Default is true (on)
+	 */
 	public void setBounce(boolean bouncing) {
 		bounce = bouncing;
+	}
+
+	/**
+	 * Sets how fast the animation will be. Higher value means faster animation. Must be >= 1.05. Together with Elasticity <= 0.75 it will not bounce forever.
+	 * 
+	 * @param breakspead
+	 *            Default is 4.0
+	 */
+	public void setBreakspeed(final float breakspeed) {
+		if (Math.abs(breakspeed) >= 1.05f) {
+			BREAKSPEED = Math.abs(breakspeed);
+		}
+	}
+
+	/**
+	 * Sets how much it will keep bouncing. Lower value means less bouncing. Must be <= 0.75. Together with Breakspeed >= 1.05 it will not bounce forever.
+	 * 
+	 * @param elasticity
+	 *            Default is 0.67
+	 */
+	public void setElasticity(final float elasticity) {
+		if (Math.abs(elasticity) <= 0.75f) {
+			ELASTICITY = Math.abs(elasticity);
+		}
 	}
 
 	public Runnable checkListviewTopAndBottom = new Runnable() {
 		@Override
 		public void run() {
+
 			mHandler.removeCallbacks(checkListviewTopAndBottom);
 
-			if (rebound) {
+			if (trackballEvent && firstVis < nHeaders && lastVis >= totalItems) {
+				trackballEvent = false;
+				rebound = false;
+				return;
+			}
 
-				if (trackballEvent && firstVis < nHeaders && lastVis >= totalItems) {
-					trackballEvent = false;
-					rebound = false;
-					return;
-				}
+			if (rebound) {
 
 				if (firstVis < nHeaders) {
 
@@ -174,75 +208,87 @@ public class OverscrollListview extends ListView implements OnScrollListener, Vi
 						smoothScrollBy(0, 0);
 						rebound = false;
 						recalcV = false;
-						velocity = 0;
+						velocity = 0f;
 					}
 
 					if (recalcV) {
 						recalcV = false;
-						velocity /= (1.0f + ((System.currentTimeMillis() - flingTimestamp) / 1000.0f));
+						velocity /= (1f + ((System.currentTimeMillis() - flingTimestamp) / 1000f));
 					}
 					if (firstVis == nHeaders) {
 						recalcV = false;
 					}
-					measure = getChildAt(nHeaders);
-					try {
+					if (visibleCnt > nHeaders) {
+						measure = getChildAt(nHeaders);
 						if (measure.getTop() + velocity < divHeight) {
-							velocity *= BOUNCEBRAKE;
-							if (!bounce || Math.abs(velocity) < 1.0f) {
+							velocity *= -ELASTICITY;
+							if (!bounce || Math.abs(velocity) < BREAKSPEED) {
 								rebound = false;
 								recalcV = false;
-								velocity = 0;
+								velocity = 0f;
 							} else {
-								setSelectionFromTop(nHeaders, divHeight - 1);
+								setSelectionFromTop(nHeaders, divHeight + 1);
 							}
 						}
-					} catch (Exception e) {
-						if (velocity > 0) velocity = -velocity;
+					} else {
+						if (velocity > 0f) velocity = -velocity;
 					}
 					if (rebound) {
 						smoothScrollBy((int) -velocity, 0);
-						if (velocity > BREAKSPEED) velocity /= BREAKSPEED;
-						else velocity -= BREAKSPEED;
+						if (velocity > BREAKSPEED) {
+							velocity *= ELASTICITY;
+							if (velocity < BREAKSPEED) {
+								rebound = false;
+								recalcV = false;
+								velocity = 0f;
+							}
+						} else velocity -= BREAKSPEED;
 					}
 
 				} else if (lastVis >= totalItems) {
 
 					if (recalcV) {
 						recalcV = false;
-						velocity /= (1.0f + ((System.currentTimeMillis() - flingTimestamp) / 1000.0f));
+						velocity /= (1f + ((System.currentTimeMillis() - flingTimestamp) / 1000f));
 					}
 					if (lastVis == totalItems - nHeaders - nFooters) {
 						rebound = false;
 						recalcV = false;
-						velocity = 0;
+						velocity = 0f;
 					} else {
-						measure = getChildAt(visibleCnt - nHeaders - nFooters);
-						try {
+						if (visibleCnt > (nHeaders + nFooters)) {
+							measure = getChildAt(visibleCnt - nHeaders - nFooters);
 							if (measure.getBottom() + velocity > getHeight() - divHeight) {
-								velocity *= BOUNCEBRAKE;
-								if (!bounce || Math.abs(velocity) < 1.0f) {
+								velocity *= -ELASTICITY;
+								if (!bounce || Math.abs(velocity) < BREAKSPEED) {
 									rebound = false;
 									recalcV = false;
-									velocity = 0;
+									velocity = 0f;
 								} else {
-									setSelectionFromTop(lastVis - nHeaders - nFooters, getHeight() - divHeight - measure.getHeight() + 1);
+									setSelectionFromTop(lastVis - nHeaders - nFooters, getHeight() - divHeight - measure.getHeight() - 1);
 								}
 							}
-						} catch (Exception e) {
-							if (velocity < 0) velocity = -velocity;
+						} else {
+							if (velocity < 0f) velocity = -velocity;
 						}
 					}
 					if (rebound) {
 						smoothScrollBy((int) -velocity, 0);
-						if (velocity < -BREAKSPEED) velocity /= BREAKSPEED;
-						else velocity += BREAKSPEED;
+						if (velocity < -BREAKSPEED) {
+							velocity *= ELASTICITY;
+							if (velocity > -BREAKSPEED / ELASTICITY) {
+								rebound = false;
+								recalcV = false;
+								velocity = 0f;
+							}
+						} else velocity += BREAKSPEED;
 					}
 
 				} else if (scrollstate == OnScrollListener.SCROLL_STATE_IDLE) {
 
 					rebound = false;
 					recalcV = false;
-					velocity = 0;
+					velocity = 0f;
 				}
 				mHandler.postDelayed(checkListviewTopAndBottom, delay);
 				return;
