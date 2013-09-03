@@ -204,7 +204,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 				if (firstVis < nHeaders) {
 
 					// hack to avoid strange behaviour when there aren't enough items to fill the entire listview
-					if (lastVis >= totalItems) {
+					if (lastVis >= totalItems + nHeaders) {
 						smoothScrollBy(0, 0);
 						rebound = false;
 						recalcV = false;
