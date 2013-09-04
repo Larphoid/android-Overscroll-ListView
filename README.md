@@ -19,7 +19,9 @@ Ofcourse you can put the OverscrollListview.java in your current package and cha
 
 When assigning the listview to a variable somewhere in your app, ofcourse you have to make it a OverscrollListview.
 
-IMPORTANT: whenever you populate your listview, when you'r finished populating, don't forget to call listview.initializeValues(),
-and set the first visible item to something other than the header or footer view. For example like this: listview.setSelectionFromTop(listview.nHeaders, listview.divHeight)
+IMPORTANT: whenever you populate your listview, when you'r finished populating, don't forget to call listview.initializeValues().
+
+CHANGES:
+after populating the listview it is not necesary anymore to set the first visible item to something other than the header or footer view. For example like this: listview.setSelectionFromTop(listview.nHeaders, listview.divHeight), this is now done in initializeValues().
 
 Thats it, enjoy !
