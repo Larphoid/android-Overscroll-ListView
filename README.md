@@ -22,6 +22,6 @@ When assigning the listview to a variable somewhere in your app, ofcourse you ha
 IMPORTANT: whenever you populate your listview, when you'r finished populating, don't forget to call listview.initializeValues().
 
 CHANGES:
-after populating the listview it is not necesary anymore to set the first visible item to something other than the header or footer view. For example like this: listview.setSelectionFromTop(listview.nHeaders, listview.divHeight), this is now done in initializeValues().
+after populating the listview it is not necesary anymore to set the first visible item to something other than the header or footer view (for example like this: listview.setSelectionFromTop(listview.nHeaders, listview.divHeight)), this is now done in initializeValues().
 
 Thats it, enjoy !
