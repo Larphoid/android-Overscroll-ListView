@@ -25,3 +25,62 @@ CHANGES:
 after populating the listview it is not necesary anymore to set the first visible item to something other than the header or footer view (for example like this: listview.setSelectionFromTop(listview.nHeaders, listview.divHeight)), this is now done in initializeValues().
 
 Thats it, enjoy !
+
+Example:
+========
+The following is an example of how to include Overscrollable in your project.
+```Java
+package com.example.tutorial;
+
+
+import android.os.Bundle;
+import android.app.Activity;
+import android.widget.ArrayAdapter;
+import com.larphoid.overscrolllistview.OverscrollListview;
+
+public class MainActivity extends Activity {
+
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
+
+		OverscrollListview listView = (OverscrollListview)findViewById(R.id.list);
+
+		// Defined Array values to show in ListView
+		String[] values = new String[] { 
+				"List item 1", 
+				"List item 2",
+				"List item 3",
+				"List item 4", 
+				"List item 5", 
+				"List item 6", 
+				"List item 7", 
+				"List item 8" 
+		};
+		ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+				android.R.layout.simple_list_item_1, android.R.id.text1, values);
+		listView.setAdapter(adapter); 
+	}
+}
+
+```
+
+```XML
+<!-- activity_main.xml -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <com.larphoid.overscrolllistview.OverscrollListview
+        android:id="@+id/list"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+    </com.larphoid.overscrolllistview.OverscrollListview>
+
+</LinearLayout>
+```
+
+Be sure to include the 'com.larphoid.overscrolllistview' package in your Android
+Project src file and you're all set.
