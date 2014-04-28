@@ -3,21 +3,23 @@ package com.larphoid.overscrolllistview;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
+import android.view.Display;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.GestureDetector.OnGestureListener;
 import android.widget.AbsListView;
+import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.AbsListView.OnScrollListener;
 
+/** @author Larphoid Apps. */
 public class OverscrollListView extends ListView implements OnScrollListener, View.OnTouchListener, android.widget.AdapterView.OnItemSelectedListener {
 
 	protected static float BREAKSPEED = 4f, ELASTICITY = 0.67f;
 
-	public Handler mHandler = new Handler();
 	public int nHeaders = 1, nFooters = 1, divHeight = 0, delay = 10;
 	private int firstVis, visibleCnt, lastVis, totalItems, scrollstate;
 	private boolean bounce = true, rebound = false, recalcV = false, trackballEvent = false;
@@ -25,6 +27,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 	private float velocity;
 	private View measure;
 	private GestureDetector gesture;
+	private Handler mHandler = new Handler();
 
 	public OverscrollListView(Context context) {
 		super(context);
@@ -52,7 +55,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 	@Override
 	public void onScrollStateChanged(AbsListView view, int scrollState) {
 		scrollstate = scrollState;
-		if (scrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL) {
+		if ( scrollState != OnScrollListener.SCROLL_STATE_TOUCH_SCROLL ) {
 			rebound = true;
 			mHandler.postDelayed(checkListviewTopAndBottom, delay);
 		}
@@ -125,10 +128,11 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 	};
 
 	private void initialize(Context context) {
-		View header = new View(context);
-		header.setMinimumHeight(((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getHeight());
-		addHeaderView(header, null, false);
-		addFooterView(header, null, false);
+		final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
+		final View v = new View(context);
+		v.setMinimumHeight(Math.max(display.getWidth(), display.getHeight()));
+		addHeaderView(v, null, false);
+		addFooterView(v, null, false);
 
 		gesture = new GestureDetector(new gestureListener());
 		gesture.setIsLongpressEnabled(false);
@@ -140,6 +144,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 		setOnItemSelectedListener(this);
 	}
 
+	/** This should be called after you finish populating the listview ! This includes any calls to {@link Adapter#notifyDataSetChanged()} and obviously every time you re-populate the listview. */
 	public void initializeValues() {
 		nHeaders = getHeaderViewsCount();
 		nFooters = getFooterViewsCount();
@@ -151,13 +156,15 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 		scrollstate = 0;
 		rebound = true;
 		setSelectionFromTop(nHeaders, divHeight);
+		smoothScrollBy(0, 0);
+		mHandler.postDelayed(checkListviewTopAndBottom, delay);
 	}
 
 	/**
-	 * Turns bouncing animation on/off.
+	 * Turns the bouncing animation on or off.
 	 * 
 	 * @param bouncing
-	 *            Default is true (on)
+	 *            {@code true } for bouncing effect (this is also the default), {@code false} to turn it off.
 	 */
 	public void setBounce(boolean bouncing) {
 		bounce = bouncing;
@@ -170,7 +177,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 	 *            Default is 4.0
 	 */
 	public void setBreakspeed(final float breakspeed) {
-		if (Math.abs(breakspeed) >= 1.05f) {
+		if ( Math.abs(breakspeed) >= 1.05f ) {
 			BREAKSPEED = Math.abs(breakspeed);
 		}
 	}
@@ -182,7 +189,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 	 *            Default is 0.67
 	 */
 	public void setElasticity(final float elasticity) {
-		if (Math.abs(elasticity) <= 0.75f) {
+		if ( Math.abs(elasticity) <= 0.75f ) {
 			ELASTICITY = Math.abs(elasticity);
 		}
 	}
@@ -193,36 +200,36 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 
 			mHandler.removeCallbacks(checkListviewTopAndBottom);
 
-			if (trackballEvent && firstVis < nHeaders && lastVis >= totalItems) {
+			if ( trackballEvent && firstVis < nHeaders && lastVis >= totalItems ) {
 				trackballEvent = false;
 				rebound = false;
 				return;
 			}
 
-			if (rebound) {
+			if ( rebound ) {
 
-				if (firstVis < nHeaders) {
+				if ( firstVis < nHeaders ) {
 
 					// hack to avoid strange behaviour when there aren't enough items to fill the entire listview
-					if (lastVis >= totalItems) {
+					if ( lastVis >= totalItems ) {
 						smoothScrollBy(0, 0);
 						rebound = false;
 						recalcV = false;
 						velocity = 0f;
 					}
 
-					if (recalcV) {
+					if ( recalcV ) {
 						recalcV = false;
 						velocity /= (1f + ((System.currentTimeMillis() - flingTimestamp) / 1000f));
 					}
-					if (firstVis == nHeaders) {
+					if ( firstVis == nHeaders ) {
 						recalcV = false;
 					}
-					if (visibleCnt > nHeaders) {
+					if ( visibleCnt > nHeaders ) {
 						measure = getChildAt(nHeaders);
-						if (measure.getTop() + velocity < divHeight) {
+						if ( measure.getTop() + velocity < divHeight ) {
 							velocity *= -ELASTICITY;
-							if (!bounce || Math.abs(velocity) < BREAKSPEED) {
+							if ( !bounce || Math.abs(velocity) < BREAKSPEED ) {
 								rebound = false;
 								recalcV = false;
 								velocity = 0f;
@@ -231,13 +238,13 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 							}
 						}
 					} else {
-						if (velocity > 0f) velocity = -velocity;
+						if ( velocity > 0f ) velocity = -velocity;
 					}
-					if (rebound) {
+					if ( rebound ) {
 						smoothScrollBy((int) -velocity, 0);
-						if (velocity > BREAKSPEED) {
+						if ( velocity > BREAKSPEED ) {
 							velocity *= ELASTICITY;
-							if (velocity < BREAKSPEED) {
+							if ( velocity < BREAKSPEED ) {
 								rebound = false;
 								recalcV = false;
 								velocity = 0f;
@@ -245,22 +252,22 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 						} else velocity -= BREAKSPEED;
 					}
 
-				} else if (lastVis >= totalItems) {
+				} else if ( lastVis >= totalItems ) {
 
-					if (recalcV) {
+					if ( recalcV ) {
 						recalcV = false;
 						velocity /= (1f + ((System.currentTimeMillis() - flingTimestamp) / 1000f));
 					}
-					if (lastVis == totalItems - nHeaders - nFooters) {
+					if ( lastVis == totalItems - nHeaders - nFooters ) {
 						rebound = false;
 						recalcV = false;
 						velocity = 0f;
 					} else {
-						if (visibleCnt > (nHeaders + nFooters)) {
+						if ( visibleCnt > (nHeaders + nFooters) ) {
 							measure = getChildAt(visibleCnt - nHeaders - nFooters);
-							if (measure.getBottom() + velocity > getHeight() - divHeight) {
+							if ( measure.getBottom() + velocity > getHeight() - divHeight ) {
 								velocity *= -ELASTICITY;
-								if (!bounce || Math.abs(velocity) < BREAKSPEED) {
+								if ( !bounce || Math.abs(velocity) < BREAKSPEED ) {
 									rebound = false;
 									recalcV = false;
 									velocity = 0f;
@@ -269,14 +276,14 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 								}
 							}
 						} else {
-							if (velocity < 0f) velocity = -velocity;
+							if ( velocity < 0f ) velocity = -velocity;
 						}
 					}
-					if (rebound) {
+					if ( rebound ) {
 						smoothScrollBy((int) -velocity, 0);
-						if (velocity < -BREAKSPEED) {
+						if ( velocity < -BREAKSPEED ) {
 							velocity *= ELASTICITY;
-							if (velocity > -BREAKSPEED / ELASTICITY) {
+							if ( velocity > -BREAKSPEED / ELASTICITY ) {
 								rebound = false;
 								recalcV = false;
 								velocity = 0f;
@@ -284,7 +291,7 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 						} else velocity += BREAKSPEED;
 					}
 
-				} else if (scrollstate == OnScrollListener.SCROLL_STATE_IDLE) {
+				} else if ( scrollstate == OnScrollListener.SCROLL_STATE_IDLE ) {
 
 					rebound = false;
 					recalcV = false;
@@ -294,15 +301,15 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 				return;
 			}
 
-			if (scrollstate != OnScrollListener.SCROLL_STATE_IDLE) return;
+			if ( scrollstate != OnScrollListener.SCROLL_STATE_IDLE ) return;
 
-			if (totalItems == (nHeaders + nFooters) || firstVis < nHeaders) {
+			if ( totalItems == (nHeaders + nFooters) || firstVis < nHeaders ) {
 				setSelectionFromTop(nHeaders, divHeight);
 				smoothScrollBy(0, 0);
-			} else if (lastVis == totalItems) {
+			} else if ( lastVis == totalItems ) {
 				int offset = getHeight() - divHeight;
 				measure = getChildAt(visibleCnt - nHeaders - nFooters);
-				if (measure != null) offset -= measure.getHeight();
+				if ( measure != null ) offset -= measure.getHeight();
 				setSelectionFromTop(lastVis - nHeaders - nFooters, offset);
 				smoothScrollBy(0, 0);
 			}
