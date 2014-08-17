@@ -87,5 +87,6 @@ Project src file and you're all set.
 
 
 LICENSE
+=======
 
 This projected is licensed under the terms of the GPL license.
