@@ -84,3 +84,8 @@ public class MainActivity extends Activity {
 
 Be sure to include the 'com.larphoid.overscrolllistview' package in your Android
 Project src file and you're all set.
+
+
+LICENSE
+
+This projected is licensed under the terms of the GPL license.
