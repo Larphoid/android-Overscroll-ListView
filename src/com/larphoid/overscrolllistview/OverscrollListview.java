@@ -129,10 +129,14 @@ public class OverscrollListView extends ListView implements OnScrollListener, Vi
 
 	private void initialize(Context context) {
 		final Display display = ((WindowManager) context.getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay();
-		final View v = new View(context);
-		v.setMinimumHeight(Math.max(display.getWidth(), display.getHeight()));
-		addHeaderView(v, null, false);
-		addFooterView(v, null, false);
+
+		final View headerView = new View(context);
+		headerView.setMinimumHeight(Math.max(display.getWidth(), display.getHeight()));
+		addHeaderView(headerView, null, false);
+
+		final View footerView = new View(context);
+		footerView.setMinimumHeight(Math.max(display.getWidth(), display.getHeight()));
+		addFooterView(footerView, null, false);
 
 		gesture = new GestureDetector(new gestureListener());
 		gesture.setIsLongpressEnabled(false);
